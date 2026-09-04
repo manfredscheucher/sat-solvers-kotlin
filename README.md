@@ -1,5 +1,8 @@
 # sat-solvers-kotlin
 
+> Sibling project: [sat-solvers-dafny](https://github.com/manfredscheucher/sat-solvers-dafny) —
+> the same four solvers ported to Dafny, verified for memory safety.
+
 Kotlin Multiplatform (KMP) ports of a few well-known C/C++ SAT solvers: MicroSAT,
 MiniSat, CaDiCaL and kissat. Each one is its own module.
 
@@ -58,9 +61,18 @@ pins down the same decisions, propagations and conflicts in the same order. For
 the integer-heuristic solver (MicroSAT) this holds exactly; for the ones with
 `double` VSIDS activities it holds as long as the float arithmetic is written in
 the same order as the C, which is what the ports do. Details and the known limits
-are in `doc/shadowing-methodology`.
+are in `doc/shadowing-methodology` (start at [`doc/README.md`](doc/README.md)).
 
 ## License
 
-MIT, see [LICENSE](LICENSE). These are ports, so each one keeps its upstream
-copyright and MIT notice; those are in [`licenses/`](licenses/).
+MIT — see [LICENSE](LICENSE). Each port is a derivative work of an MIT-licensed original solver
+(microSAT © Marijn Heule; MiniSat © Niklas Eén & Niklas Sörensson; CaDiCaL and kissat © Armin
+Biere and contributors). Original license texts are preserved under `licenses/`, and the
+per-solver attribution is in [LICENSE](LICENSE) and each source file's header. The original
+C/C++ solver sources are included under `shadow/` as references for the byte-for-byte shadow tests.
+
+## Development
+
+Ported with the help of Claude (Anthropic). Every port is checked against its C
+original by the shadow tests in this repo, so correctness rests on those tests,
+not on how the code was written.

@@ -20,13 +20,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
 
-This repository contains Kotlin PORTS of established C/C++ SAT solvers. Each
-port is a derivative work of its upstream, all of which are MIT licensed. The
-original copyright notices and license texts are retained in `licenses/`:
+================================================================================
+Third-party attribution
+================================================================================
 
-  - MicroSAT  — Copyright (c) 2014-2017 Marijn Heule          (licenses/microsat-LICENSE.txt)
-  - MiniSat   — Copyright (c) 2003-2010 Niklas Een, Niklas Sorensson (licenses/minisat-LICENSE.txt)
-  - CaDiCaL   — Copyright (c) 2016-2021 Armin Biere et al.    (licenses/cadical-LICENSE.txt)
-  - kissat    — Copyright (c) 2019-2025 Armin Biere et al.    (licenses/kissat-LICENSE.txt)
+Each solver here is a Kotlin port of an existing solver, and every original is
+MIT licensed. The port keeps the original copyright and adds the port on the
+same line; the full original license texts are in licenses/.
+
+  MicroSAT — Copyright (c) 2014-2017 Marijn Heule; Kotlin port by Manfred Scheucher 2026
+             (licenses/microsat-LICENSE.txt)
+  MiniSat  — Copyright (c) 2003-2010 Niklas Eén, Niklas Sörensson; Kotlin port by Manfred Scheucher 2026
+             (licenses/minisat-LICENSE.txt)
+  CaDiCaL  — Copyright (c) 2016-2026 Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
+             (licenses/cadical-LICENSE.txt)
+  kissat   — Copyright (c) 2019-2025 Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
+             (licenses/kissat-LICENSE.txt)
+
+The cadical and kissat ports cover the CDCL search core only, not the
+inprocessing machinery. The original solver sources are included under shadow/
+as references for the byte-for-byte shadow tests.
