@@ -539,6 +539,11 @@ struct Solver {
 
     // ---- search ----
     // returns l_True / l_False / l_Undef
+    // Assumptions: signed-DIMACS literals forced as decisions before free search, mirrored
+    // 1:1 by the Kotlin port (Solver::search consumes them at the front of the trail). Empty
+    // for the plain shadow runs; set from a file in main() for the assumption shadow runs.
+    vector<Lit> assumptions;
+
     lbool search(int nof_conflicts) {
         int backtrack_level;
         int conflictC = 0;
@@ -576,8 +581,26 @@ struct Solver {
                 if (decisionLevel() == 0 && !simplify()) return l_False;
                 if ((int)learnts.size() - nAssigns() >= (int)max_learnts) reduceDB();
 
-                Lit next = pickBranchLit();
-                if (eq(next, lit_Undef)) return l_True;
+                // Consume assumptions first (upstream Solver::search): each becomes a forced
+                // decision on its own level; an already-true one gets a dummy level, an
+                // already-false one makes this solve UNSAT under the assumptions.
+                Lit next = lit_Undef;
+                while (decisionLevel() < (int)assumptions.size()) {
+                    Lit p = assumptions[decisionLevel()];
+                    if (value(p) == l_True) {
+                        newDecisionLevel();
+                    } else if (value(p) == l_False) {
+                        return l_False;
+                    } else {
+                        next = p;
+                        break;
+                    }
+                }
+
+                if (eq(next, lit_Undef)) {
+                    next = pickBranchLit();
+                    if (eq(next, lit_Undef)) return l_True;
+                }
                 newDecisionLevel();
                 TR("DECIDE %d\n", dimacsOf(next));
                 uncheckedEnqueue(next, CRef_Undef, 'D');
@@ -690,6 +713,20 @@ int main(int argc, char** argv) {
     if (argc <= 1) { printf("no input file provided\n"); return 0; }
     Solver S;
     if (!parseDimacs(S, argv[1])) return 1;
+    // Optional argv[2]: a file of signed-DIMACS assumption literals (whitespace-separated).
+    // They are forced as decisions before free search, exactly as the Kotlin solve(assumptions).
+    if (argc > 2) {
+        FILE* af = fopen(argv[2], "r");
+        if (!af) { printf("cannot open assumptions file %s\n", argv[2]); return 1; }
+        int dl;
+        while (fscanf(af, "%d", &dl) == 1) {
+            if (dl == 0) continue;
+            int v = abs(dl) - 1;
+            while (v >= S.nVars()) S.newVar();
+            S.assumptions.push_back(mkLit(v, dl < 0));
+        }
+        fclose(af);
+    }
     int r = S.solve_();
     if (r == 1) { S.captureModel(); printf("s SATISFIABLE\n"); }
     else        { printf("s UNSATISFIABLE\n"); }
