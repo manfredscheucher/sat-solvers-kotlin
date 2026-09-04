@@ -1452,6 +1452,13 @@ class Kissat(
     // literals (2*idx + sign), converted from signed DIMACS in solve(assumptions).
     private var assumptionLits: IntArray = IntArray(0)
     private var assumptionsAssigned = 0
+    // number of decision levels occupied by assumptions (real + pseudo). A conflict whose
+    // conflict level is <= this is a conflict AMONG the assumptions themselves, i.e. UNSAT
+    // under the assumptions -- it must end the solve (return 20), NOT be sent through
+    // analyzeFailedLiteral (which is kissat's failed-literal inprocessing for genuine level-1
+    // decisions; for an assumption it would learn not(assumption) as a permanent unit, give
+    // the wrong verdict, and poison later solves on the same instance).
+    private var numAssumptionLevels = 0
 
     // returns 0 to continue, 20 if an assumption is falsified (-> UNSAT for this solve)
     private fun decide(): Int {
@@ -1463,10 +1470,12 @@ class Kissat(
                 return 20            // assumption falsified under the forced prefix
             } else if (v > 0) {
                 level++              // pseudo frame: already satisfied, no assign, no DECIDE
+                numAssumptionLevels = level
                 pushFrame(0)
                 return 0
             } else {
                 level++
+                numAssumptionLevels = level
                 pushFrame(l)
                 tr("DECIDE ${dimacs(l)}")
                 assignDecision(l)
@@ -1494,6 +1503,13 @@ class Kissat(
         do {
             if (oneLiteralOnConflictLevel(cref)) res = 1
             else if (ollConflictLevel == 0) res = -1
+            else if (ollConflictLevel in 1..numAssumptionLevels) {
+                // conflict among the assumptions themselves -> UNSAT under the assumptions.
+                // Do NOT run analyzeFailedLiteral here: that is failed-literal inprocessing
+                // for a genuine level-1 decision and would learn not(assumption) as a unit,
+                // report SAT, and poison later solves. Just end the solve.
+                res = -1
+            }
             else if (ollConflictLevel == 1) { analyzeFailedLiteral(cref); res = 1 }
             else {
                 deduceFirstUipClause(cref)
@@ -1678,12 +1694,14 @@ class Kissat(
         }
         assumptionLits = internal
         assumptionsAssigned = 0
+        numAssumptionLevels = 0
         val r = try {
             searchLoop()
         } finally {
             if (level > 0) backtrackInConsistentState(0)
             assumptionLits = IntArray(0)
             assumptionsAssigned = 0
+            numAssumptionLevels = 0
         }
         return if (r == 10) SatResult.SAT else SatResult.UNSAT
     }
