@@ -1443,7 +1443,36 @@ class Kissat(
         if (res == 0) res = initialPhase()
         return if (res < 0) -1 else 1
     }
-    private fun decide() {
+    // ---- assumptions (decision literals forced before free search) ----
+    // kissat consumes assumptions in decide(): while some remain, the next decision is the
+    // next assumption (as an internal literal) instead of a heuristic pick. A falsified
+    // assumption ends the solve as UNSAT; an already-true one gets a pseudo frame (no assign,
+    // no DECIDE trace). Only the verdict + model are produced here — no failed-literal core.
+    // After the solve the trail is rolled back so the same instance is reusable. Internal
+    // literals (2*idx + sign), converted from signed DIMACS in solve(assumptions).
+    private var assumptionLits: IntArray = IntArray(0)
+    private var assumptionsAssigned = 0
+
+    // returns 0 to continue, 20 if an assumption is falsified (-> UNSAT for this solve)
+    private fun decide(): Int {
+        if (assumptionsAssigned < assumptionLits.size) {
+            val l = assumptionLits[assumptionsAssigned]
+            assumptionsAssigned++
+            val v = values[l].toInt()
+            if (v < 0) {
+                return 20            // assumption falsified under the forced prefix
+            } else if (v > 0) {
+                level++              // pseudo frame: already satisfied, no assign, no DECIDE
+                pushFrame(0)
+                return 0
+            } else {
+                level++
+                pushFrame(l)
+                tr("DECIDE ${dimacs(l)}")
+                assignDecision(l)
+                return 0
+            }
+        }
         level++
         val idx = nextDecisionVariable()
         val v = decidePhase(idx)
@@ -1452,6 +1481,7 @@ class Kissat(
         pushFrame(l)
         tr("DECIDE ${dimacs(l)}")
         assignDecision(l)
+        return 0
     }
 
     // =========================================================================
@@ -1572,11 +1602,11 @@ class Kissat(
                 // update tier limits on interval (as in analyze.c after deduce)
                 if (conflicts > limGlueConflicts) updateTierLimits()
             } else if (iterating) { iterating = false }
-            else if (unassigned == 0) res = 10
+            else if (unassigned == 0 && assumptionsAssigned >= assumptionLits.size) res = 10
             else if (reducing()) res = reduce()
             else if (switchingSearchMode()) switchSearchMode()
             else if (restarting()) restart()
-            else decide()
+            else res = decide() // 0 continue, 20 if an assumption is falsified
         }
 
         if (res == 10) { captureModel(); tr("RESULT SAT") }
@@ -1625,6 +1655,36 @@ class Kissat(
 
     override fun solve(): SatResult {
         val r = searchLoop()
+        return if (r == 10) SatResult.SAT else SatResult.UNSAT
+    }
+
+    /**
+     * Solve UNDER the given [assumptions] (signed DIMACS literals); see [SatSolver.solve].
+     * The assumptions are consumed as forced decisions in [decide]; after the solve the trail
+     * is rolled back to level 0 so the same instance can be solved again under different
+     * assumptions on the same clause set. On SAT, [valueOf] is the model of this solve; on
+     * UNSAT the assumptions were jointly inconsistent with the formula. Verdict + model only,
+     * no failed-assumption core.
+     */
+    override fun solve(assumptions: IntArray): SatResult {
+        // convert signed DIMACS assumptions to internal literals (2*idx + sign), creating any
+        // referenced variable lazily, exactly as addClause does.
+        val internal = IntArray(assumptions.size)
+        for (i in assumptions.indices) {
+            val dl = assumptions[i]
+            val idx = (if (dl < 0) -dl else dl) - 1
+            ensureVars(idx + 1)
+            internal[i] = lit(idx) or (if (dl < 0) 1 else 0)
+        }
+        assumptionLits = internal
+        assumptionsAssigned = 0
+        val r = try {
+            searchLoop()
+        } finally {
+            if (level > 0) backtrackInConsistentState(0)
+            assumptionLits = IntArray(0)
+            assumptionsAssigned = 0
+        }
         return if (r == 10) SatResult.SAT else SatResult.UNSAT
     }
 

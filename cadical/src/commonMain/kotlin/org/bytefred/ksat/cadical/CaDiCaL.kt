@@ -1154,15 +1154,50 @@ class CaDiCaL(
         if (phase == 0) phase = initialPhase
         return phase * idx
     }
-    private fun satisfied(): Boolean = numAssigned == maxVar
+    // ---- assumptions (decision literals forced before free search) ----
+    // CaDiCaL consumes assumptions in decide(): while level < assumptions.size the next
+    // decision is assumptions[level] instead of a heuristic pick, so satisfied() must also
+    // wait for all assumptions to be on the trail. A falsified assumption ends the solve
+    // as UNSAT (decide returns 20, like the C loop). Only the verdict + model are needed
+    // here, so CaDiCaL's frozen-literal / failed-core bookkeeping is not ported. After the
+    // solve the trail is rolled back, so the same instance can be solved again under other
+    // assumptions on the same clause set. Signed DIMACS literals.
+    private var assumptions: IntArray = IntArray(0)
 
-    private fun decide() {
+    private fun satisfied(): Boolean {
+        // not satisfied until every assumption has been forced onto its own level
+        if (level < assumptions.size) return false
+        return numAssigned == maxVar
+    }
+
+    // returns 0 to continue, 20 if an assumption is falsified (-> UNSAT for this solve)
+    private fun decide(): Int {
+        if (level < assumptions.size) {
+            val lit = assumptions[level]
+            ensureVar(vidx(lit))
+            val v = valOfLit(lit)
+            if (v < 0) {
+                // assumption falsified under the current (assumption-forced) prefix
+                return 20
+            } else if (v > 0) {
+                // already satisfied: add a pseudo decision level, like CaDiCaL. This is not
+                // a real branch, so no DECIDE trace is emitted (matches new_trail_level(0)).
+                newTrailLevel(0)
+                return 0
+            } else {
+                newTrailLevel(lit)
+                tr("DECIDE $lit")
+                assign(lit, CREF_DECISION, 'D')
+                return 0
+            }
+        }
         val idx = nextDecisionVariable()
         val target = (OPT_target > 1 || (stable && OPT_target != 0))
         val decision = decidePhase(idx, target)
         newTrailLevel(decision)
         tr("DECIDE $decision")
         assign(decision, CREF_DECISION, 'D')
+        return 0
     }
 
     // =========================================================================
@@ -1219,7 +1254,7 @@ class CaDiCaL(
             else if (satisfied()) res = 10
             else if (restarting()) restart()
             else if (reducing()) reduce()
-            else decide()
+            else res = decide() // 0 continue, 20 if an assumption is falsified
         }
 
         if (res == 10) {
@@ -1246,6 +1281,26 @@ class CaDiCaL(
 
     override fun solve(): SatResult {
         val r = solveLoop()
+        return if (r == 10) SatResult.SAT else SatResult.UNSAT
+    }
+
+    /**
+     * Solve UNDER the given [assumptions] (signed DIMACS literals); see [SatSolver.solve].
+     * The assumptions are consumed as forced decisions in [decide]; after the solve the trail
+     * is rolled back to level 0 so the same instance can be solved again under different
+     * assumptions on the same clause set. On SAT, [valueOf] is the model of this solve; on
+     * UNSAT the assumptions were jointly inconsistent with the formula. Only the verdict and
+     * the model are produced — no failed-assumption core.
+     */
+    override fun solve(assumptions: IntArray): SatResult {
+        this.assumptions = assumptions
+        val r = try {
+            solveLoop()
+        } finally {
+            // roll back the assumption-forced prefix so the instance is reusable
+            if (level > 0) backtrack(0)
+            this.assumptions = IntArray(0)
+        }
         return if (r == 10) SatResult.SAT else SatResult.UNSAT
     }
 
