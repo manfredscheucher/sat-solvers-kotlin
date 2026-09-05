@@ -2,10 +2,10 @@
 
 [Kotlin Multiplatform](https://en.wikipedia.org/wiki/Kotlin_(programming_language)#Kotlin_Multiplatform)
 ports of four well-known C/C++ SAT solvers: microSAT, MiniSat, CaDiCaL and kissat. The
-solvers are plain Kotlin, no FFI and no native library, so the same code runs on the JVM
-(and Android), on native iOS/macOS/Linux/Windows, and in the browser. Each solver is its
-own module. So far I build and test on JVM and iOS; the other targets just need enabling
-in the Gradle config.
+solvers are plain Kotlin, no FFI and no native library, so the code can target any Kotlin
+platform (JVM, Android, native, browser). Right now the modules are configured and tested
+for JVM and iOS (arm64 + simulator); the other targets are pure-Kotlin-compatible but not
+yet enabled in the Gradle config. Each solver is its own module.
 
 Each solver is a line-by-line port of an existing one, checked against the original C
 trace by trace, not just on the final SAT/UNSAT answer (see
@@ -31,13 +31,14 @@ different search and still be wrong on the next instance. Comparing the trace
 pins down the same decisions, propagations and conflicts in the same order. For
 the integer-heuristic solver (microSAT) this holds exactly. For the ones with
 `double` VSIDS activities it holds as long as the float arithmetic is written in
-the same order as the C, which is what the ports do. The methodology, the known
-limits, and the per-solver status are in `doc/`.
+the same order as the C, which is what the ports do. The verification methodology,
+the known limits, and the per-solver status are in `doc/`.
 
 ## Picking a solver
 
 The three larger solvers take the same CNF and give back the same answer, so
-switching between them is a one-word change:
+switching between them is a one-word change (microSAT is ported and shadow-tested
+too, but not wired into the `Ksat` picker):
 
 ```kotlin
 val s = Ksat(Solver.CADICAL, numVars = 3)   // or MINISAT / KISSAT
