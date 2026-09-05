@@ -1,26 +1,25 @@
 # sat-solvers-kotlin
 
 > Sibling project: [sat-solvers-dafny](https://github.com/manfredscheucher/sat-solvers-dafny),
-> the same four solvers ported to Dafny and verified for memory safety.
+> the same four solvers ported to Dafny (machine-checked memory safety rather than runtime portability).
 
 [Kotlin Multiplatform](https://en.wikipedia.org/wiki/Kotlin_(programming_language)#Kotlin_Multiplatform)
-ports of four well-known C/C++ SAT solvers: MicroSAT, MiniSat, CaDiCaL and kissat.
-Each one is its own module. Being Multiplatform, the same code runs not only on the
-JVM (and Android) but also on native iOS/macOS/Linux/Windows and in the browser. The
-solvers are plain Kotlin, no FFI or native library. So far I build and test on the JVM
-and iOS; the other targets just need to be enabled in the Gradle config.
+ports of four well-known C/C++ SAT solvers: microSAT, MiniSat, CaDiCaL and kissat. The
+solvers are plain Kotlin, no FFI and no native library, so the same code runs on the JVM
+(and Android), on native iOS/macOS/Linux/Windows, and in the browser. Each solver is its
+own module. So far I build and test on JVM and iOS; the other targets just need enabling
+in the Gradle config.
 
-I did not write new solvers. Each is a line-by-line translation of the original, and I
-check every port against the C code. Both run the same CNF and I compare their traces
-step by step (which variable is decided, which clause propagates, where a conflict
-happens), not just the final SAT/UNSAT answer. Package namespace is `org.bytefred.ksat`.
+I did not write new solvers. Each is a line-by-line translation of the original, checked
+against the C code trace by trace, not just on the final SAT/UNSAT answer (see
+[Why byte-for-byte](#why-byte-for-byte)). Package namespace is `org.bytefred.ksat`.
 Details and per-solver status are in `doc/` (start at [`doc/README.md`](doc/README.md)).
 
 ## Modules
 
 - `ksat-common/` is the `SatSolver` interface, `SatResult`, `Traceable`, and the
   DIMACS parser. Every port implements this.
-- `microsat/` is MicroSAT (Marijn Heule). The smallest one. It uses integer VMTF,
+- `microsat/` is microSAT (Marijn Heule). The smallest one. It uses integer VMTF,
   so the trace matches the C byte for byte.
 - `minisat/` is MiniSat core CDCL (Één, Sörensson).
 - `cadical/` is CaDiCaL core (Biere et al.).
@@ -28,6 +27,16 @@ Details and per-solver status are in `doc/` (start at [`doc/README.md`](doc/READ
 - `ksat/` is one entry point, `Ksat`, that picks a solver at runtime (see below).
 - `shadow/` holds the C references (the verbatim originals and an instrumented copy
   that prints the trace), the test CNFs, and the scripts that build and diff them.
+
+## Why byte-for-byte
+
+Matching only SAT/UNSAT hides bugs: a port can reach the right answer on a
+different search and still be wrong on the next instance. Comparing the trace
+pins down the same decisions, propagations and conflicts in the same order. For
+the integer-heuristic solver (microSAT) this holds exactly. For the ones with
+`double` VSIDS activities it holds as long as the float arithmetic is written in
+the same order as the C, which is what the ports do. The known limits are in
+`doc/shadowing-methodology.typ`.
 
 ## Picking a solver
 
@@ -44,17 +53,20 @@ if (s.solve(assumptions = intArrayOf(-x)) == SatResult.SAT) {
 
 `solve(assumptions)` forces the given literals for one solve and then backtracks,
 so you can keep one solver around and query it many times without reloading the
-clauses (the same incremental interface PySAT and IPASIR use).
+clauses (the same solve-under-assumptions style as IPASIR and PySAT).
 
-## Why byte-for-byte
+## Build & run
 
-Matching only SAT/UNSAT hides bugs: a port can reach the right answer on a
-different search and still be wrong on the next instance. Comparing the trace
-pins down the same decisions, propagations and conflicts in the same order. For
-the integer-heuristic solver (MicroSAT) this holds exactly. For the ones with
-`double` VSIDS activities it holds as long as the float arithmetic is written in
-the same order as the C, which is what the ports do. The known limits are in
-`doc/shadowing-methodology.typ`.
+Requires a JDK and the Gradle wrapper in this repo.
+
+```bash
+# run all tests (unit + the byte-for-byte shadow tests)
+./gradlew jvmTest
+
+# regenerate the golden C traces the shadow tests compare against (needs a C++ compiler)
+bash shadow/tools/regen_golden_minisat.sh
+bash shadow/tools/regen_golden_minisat_assume.sh   # the solve-under-assumptions traces
+```
 
 ## License
 
