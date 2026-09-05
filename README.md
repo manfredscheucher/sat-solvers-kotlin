@@ -40,17 +40,21 @@ The three larger solvers take the same CNF and give back the same answer, so
 switching between them is a one-word change:
 
 ```kotlin
-val s = Ksat(Solver.CADICAL, numVars = n)   // or MINISAT / KISSAT
-for (c in clauses) s.addClause(c)
-if (s.solve(assumptions = intArrayOf(-x)) == SatResult.SAT) {
-    val v = s.valueOf(x)   // model of this solve
+val s = Ksat(Solver.CADICAL, numVars = 3)   // or MINISAT / KISSAT
+s.addClause(intArrayOf(1, 2, 3))            // clauses are signed DIMACS literals:
+s.addClause(intArrayOf(-1, 2))              // +v means "var v true", -v means "false"
+
+// solve assuming var 1 is false (assumptions are literals, not just variables)
+if (s.solve(assumptions = intArrayOf(-1)) == SatResult.SAT) {
+    val var2 = s.valueOf(2)   // read var 2 in the model of this solve
 }
 ```
 
-`solve(assumptions)` forces the given literals for one solve and then backtracks,
-so you can keep one solver around and query it many times without reloading the
-clauses (the same solve-under-assumptions style as IPASIR and PySAT). Package
-namespace is `org.bytefred.ksat`.
+Variables are `1..numVars`; a literal is a signed variable (`3` = var 3 true, `-3` =
+var 3 false). `solve(assumptions)` forces those literals for one solve and then backtracks,
+so you can keep one solver around and query it many times without reloading the clauses
+(the same solve-under-assumptions style as IPASIR and PySAT). Package namespace is
+`org.bytefred.ksat`.
 
 ## Build & run
 
