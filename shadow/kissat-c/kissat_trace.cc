@@ -1527,7 +1527,33 @@ struct Solver {
     if (!res) res = (signed char) INITIAL_PHASE ();
     return res < 0 ? -1 : 1;
   }
-  void decide () {
+  // Assumptions: signed-DIMACS literals forced as decisions before free search, mirrored
+  // 1:1 by the Kotlin port. Consumed in decide(); a conflict whose level lies within the
+  // assumption prefix is UNSAT-under-assumptions (handled in analyze, NOT via failed-literal).
+  vector<unsigned> assumption_lits;   // internal literals (2*idx+sign)
+  unsigned assumptions_assigned = 0;
+  unsigned num_assumption_levels = 0;
+
+  // returns 0 to continue, 20 if an assumption is falsified (-> UNSAT for this solve)
+  int decide () {
+    if (assumptions_assigned < assumption_lits.size ()) {
+      const unsigned l = assumption_lits[assumptions_assigned];
+      assumptions_assigned++;
+      const signed char v = value (l);
+      if (v < 0) return 20;                 // assumption falsified under the forced prefix
+      if (v > 0) {                          // already satisfied: pseudo frame, no assign/DECIDE
+        level++;
+        num_assumption_levels = level;
+        push_frame (0);
+        return 0;
+      }
+      level++;
+      num_assumption_levels = level;
+      push_frame (l);
+      TR ("DECIDE %d\n", dimacs (l));
+      assign_decision (l);
+      return 0;
+    }
     level++;
     const unsigned idx = next_decision_variable ();
     const int val = decide_phase (idx);
@@ -1536,6 +1562,7 @@ struct Solver {
     push_frame (lit);
     TR ("DECIDE %d\n", dimacs (lit));
     assign_decision (lit);
+    return 0;
   }
 
   // ---- analyze (analyze.c) ----
@@ -1546,6 +1573,13 @@ struct Solver {
       unsigned conflict_level;
       if (one_literal_on_conflict_level (conflict, &conflict_level)) res = 1;
       else if (!conflict_level) res = -1;
+      else if (conflict_level >= 1 && conflict_level <= num_assumption_levels) {
+        // conflict among the assumptions themselves -> UNSAT under the assumptions.
+        // Do NOT run analyze_failed_literal (that is failed-literal inprocessing for a
+        // genuine level-1 decision; for an assumption it would learn not(assumption) as a
+        // unit, report SAT, and poison later solves). Just end the solve.
+        res = -1;
+      }
       else if (conflict_level == 1) {
         analyze_failed_literal (conflict);
         res = 1;
@@ -1666,11 +1700,11 @@ struct Solver {
         if (conflicts > lim_glue_conflicts) update_tier_limits ();
       }
       else if (iterating) { iterating = false; }
-      else if (!unassigned) res = 10;
+      else if (!unassigned && assumptions_assigned >= assumption_lits.size ()) res = 10;
       else if (reducing ()) res = reduce ();
       else if (switching_search_mode ()) switch_search_mode ();
       else if (restarting ()) restart ();
-      else decide ();
+      else res = decide ();   // 0 continue, 20 if an assumption is falsified
     }
 
     if (res == 10) { capture_model (); TR ("RESULT SAT\n"); }
@@ -1788,6 +1822,20 @@ int main (int argc, char **argv) {
   if (const char *e = getenv ("LSSTABLEINIT")) { long v = atol (e); if (v > 0) g_stableinit = v; }
   Solver s;
   if (!read_dimacs (argv[1], s)) return 1;
+  // Optional argv[2]: signed-DIMACS assumption literals (whitespace-separated), forced as
+  // decisions before free search, exactly as the Kotlin Kissat.solve(assumptions).
+  if (argc > 2) {
+    FILE *af = fopen (argv[2], "r");
+    if (!af) { fprintf (stderr, "cannot open assumptions file %s\n", argv[2]); return 1; }
+    int dl;
+    while (fscanf (af, "%d", &dl) == 1) {
+      if (dl == 0) continue;
+      const unsigned idx = (unsigned) (abs (dl) - 1);
+      s.ensure_vars (idx + 1);
+      s.assumption_lits.push_back (LIT (idx) | (dl < 0 ? 1u : 0u));
+    }
+    fclose (af);
+  }
   int res = s.search ();
   if (res == 10) printf ("s SATISFIABLE\n");
   else printf ("s UNSATISFIABLE\n");

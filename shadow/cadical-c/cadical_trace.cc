@@ -1174,10 +1174,26 @@ struct Solver {
       phase = initial_phase;
     return phase * idx;
   }
+  // Assumptions: signed-DIMACS literals forced as decisions before free search, mirrored
+  // 1:1 by the Kotlin port (decide consumes assumptions[level]). Empty for plain runs.
+  vector<int> assumptions;
+
   bool satisfied () {
+    if ((size_t) level < assumptions.size ()) return false;
     return num_assigned == (size_t) max_var;
   }
+  // returns 0 to continue, 20 if an assumption is falsified (-> UNSAT for this solve)
   int decide () {
+    if ((size_t) level < assumptions.size ()) {
+      const int lit = assumptions[level];
+      const signed char v = val (lit);
+      if (v < 0) return 20;                 // assumption falsified
+      if (v > 0) { new_trail_level (0); return 0; }  // already satisfied: pseudo level
+      new_trail_level (lit);
+      TR ("DECIDE %d\n", lit);
+      assign (lit, decision_reason, 'D');
+      return 0;
+    }
     int idx = next_decision_variable ();
     const bool target = (OPT_target > 1 || (stable && OPT_target));
     int decision = decide_phase (idx, target);
@@ -1265,7 +1281,7 @@ struct Solver {
       else if (reducing ())
         reduce ();
       else
-        decide ();
+        res = decide ();   // 0 continue, 20 if an assumption is falsified
     }
 
     if (res == 10) {
@@ -1345,6 +1361,19 @@ int main (int argc, char **argv) {
   Solver s;
   if (!read_dimacs (argv[1], s))
     return 1;
+  // Optional argv[2]: signed-DIMACS assumption literals (whitespace-separated), forced as
+  // decisions before free search, exactly as the Kotlin CaDiCaL.solve(assumptions).
+  if (argc > 2) {
+    FILE *af = fopen (argv[2], "r");
+    if (!af) { fprintf (stderr, "cannot open assumptions file %s\n", argv[2]); return 1; }
+    int dl;
+    while (fscanf (af, "%d", &dl) == 1) {
+      if (dl == 0) continue;
+      s.ensure_var (abs (dl));
+      s.assumptions.push_back (dl);
+    }
+    fclose (af);
+  }
   int res = s.solve ();
   if (res == 10) {
     printf ("s SATISFIABLE\n");
