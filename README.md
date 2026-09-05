@@ -10,8 +10,8 @@ solvers are plain Kotlin, no FFI and no native library, so the same code runs on
 own module. So far I build and test on JVM and iOS; the other targets just need enabling
 in the Gradle config.
 
-I did not write new solvers. Each is a line-by-line translation of the original, checked
-against the C code trace by trace, not just on the final SAT/UNSAT answer (see
+Each solver is a line-by-line port of an existing one, checked against the original C
+trace by trace, not just on the final SAT/UNSAT answer (see
 [Why byte-for-byte](#why-byte-for-byte)). Package namespace is `org.bytefred.ksat`.
 Details and per-solver status are in `doc/` (start at [`doc/README.md`](doc/README.md)).
 
