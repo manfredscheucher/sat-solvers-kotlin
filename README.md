@@ -9,8 +9,7 @@ in the Gradle config.
 
 Each solver is a line-by-line port of an existing one, checked against the original C
 trace by trace, not just on the final SAT/UNSAT answer (see
-[Why byte-for-byte](#why-byte-for-byte)). Package namespace is `org.bytefred.ksat`.
-Details and per-solver status are in `doc/` (start at [`doc/README.md`](doc/README.md)).
+[Why byte-for-byte](#why-byte-for-byte)).
 
 ## Modules
 
@@ -32,8 +31,8 @@ different search and still be wrong on the next instance. Comparing the trace
 pins down the same decisions, propagations and conflicts in the same order. For
 the integer-heuristic solver (microSAT) this holds exactly. For the ones with
 `double` VSIDS activities it holds as long as the float arithmetic is written in
-the same order as the C, which is what the ports do. The known limits are in
-`doc/shadowing-methodology.typ`.
+the same order as the C, which is what the ports do. The methodology, the known
+limits, and the per-solver status are in `doc/`.
 
 ## Picking a solver
 
@@ -50,7 +49,8 @@ if (s.solve(assumptions = intArrayOf(-x)) == SatResult.SAT) {
 
 `solve(assumptions)` forces the given literals for one solve and then backtracks,
 so you can keep one solver around and query it many times without reloading the
-clauses (the same solve-under-assumptions style as IPASIR and PySAT).
+clauses (the same solve-under-assumptions style as IPASIR and PySAT). Package
+namespace is `org.bytefred.ksat`.
 
 ## Build & run
 
