@@ -1,8 +1,5 @@
 # sat-solvers-kotlin
 
-> Sibling project: [sat-solvers-dafny](https://github.com/manfredscheucher/sat-solvers-dafny),
-> the same four solvers ported to Dafny (machine-checked memory safety rather than runtime portability).
-
 [Kotlin Multiplatform](https://en.wikipedia.org/wiki/Kotlin_(programming_language)#Kotlin_Multiplatform)
 ports of four well-known C/C++ SAT solvers: microSAT, MiniSat, CaDiCaL and kissat. The
 solvers are plain Kotlin, no FFI and no native library, so the same code runs on the JVM
