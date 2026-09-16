@@ -1,0 +1,7 @@
+c Tiny SAT: implication chain forcing all true. 4 vars.
+p cnf 4 5
+1 -2 0
+2 -3 0
+3 -4 0
+4 0
+-1 2 0

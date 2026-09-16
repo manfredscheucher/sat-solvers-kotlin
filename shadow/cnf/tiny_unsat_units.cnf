@@ -1,0 +1,6 @@
+c Tiny UNSAT: units 1 and -2 clash through the chain. 2 vars.
+p cnf 2 4
+1 0
+-1 2 0
+-2 0
+1 2 0

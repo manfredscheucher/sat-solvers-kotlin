@@ -1,0 +1,9 @@
+c Small UNSAT instance: (a) and (not a) forced via clauses -> UNSAT.
+c Also exercises conflict analysis. 3 vars.
+p cnf 3 6
+1 2 0
+-1 2 0
+1 -2 0
+-1 -2 0
+3 0
+-3 0
