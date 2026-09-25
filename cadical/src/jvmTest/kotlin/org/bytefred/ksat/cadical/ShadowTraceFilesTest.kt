@@ -54,7 +54,7 @@ class ShadowTraceFilesTest {
     private fun cases(shadow: File): List<Pair<File, File>> {
         val cnfDir = File(shadow, "cnf")
         val goldDir = File(shadow, "golden-cadical")
-        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") }?.sortedBy { it.name } ?: emptyList())
+        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") && f.nameWithoutExtension !in BENCHMARK_ONLY }?.sortedBy { it.name } ?: emptyList())
             .mapNotNull { cnf ->
                 val gold = File(goldDir, cnf.nameWithoutExtension + ".trace")
                 if (gold.isFile) cnf to gold else null
@@ -163,5 +163,16 @@ class ShadowTraceFilesTest {
         }
         assertTrue(sawRestart, "no CNF triggers RESTART -- RESTART path not trace-covered. Add a harder instance.")
         assertTrue(sawReduce, "no CNF triggers REDUCE -- REDUCE path not trace-covered. Add a harder instance.")
+    }
+
+    private companion object {
+        // php_9_8 and php_10_9 are large BENCHMARK instances (shadow/tools/gen_big_php.py).
+        // php_10_9's golden trace is huge (156 MB / 8.6M lines for cadical) and the
+        // byte-for-byte comparison readLines() the whole file, so it needs an ~8 GB test
+        // heap and ~27 s. It is therefore OPT-IN: pass -Dbigtrace to include it (the
+        // :cadical:jvmTest task bumps the heap when that property is set). php_9_8 is small
+        // enough (40 MB) to always compare. See doc/benchmarks.typ and doc/repo-split.md.
+        val BENCHMARK_ONLY: Set<String> =
+            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
     }
 }

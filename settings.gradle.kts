@@ -27,7 +27,11 @@ dependencyResolutionManagement {
     }
 }
 
+// ksat-common is the shared base, pulled in ONCE as the common/ submodule.
+// The nested common/ inside each solver submodule is NOT included here.
 include(":ksat-common")
+project(":ksat-common").projectDir = file("common")
+
 include(":microsat")
 include(":minisat")
 include(":cadical")

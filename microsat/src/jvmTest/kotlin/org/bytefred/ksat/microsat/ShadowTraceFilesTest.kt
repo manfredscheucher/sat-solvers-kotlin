@@ -42,7 +42,7 @@ class ShadowTraceFilesTest {
     private fun cases(shadow: File): List<Pair<File, File>> {
         val cnfDir = File(shadow, "cnf")
         val goldDir = File(shadow, "golden")
-        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") }?.sortedBy { it.name } ?: emptyList())
+        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") && f.nameWithoutExtension !in BENCHMARK_ONLY }?.sortedBy { it.name } ?: emptyList())
             .mapNotNull { cnf ->
                 val gold = File(goldDir, cnf.nameWithoutExtension + ".trace")
                 if (gold.isFile) cnf to gold else null
@@ -180,5 +180,14 @@ class ShadowTraceFilesTest {
         assertTrue(expectedTrace.contains("REDUCE"), "golden must contain REDUCE")
         assertTrue(expectedTrace.contains("RESTART"), "golden must contain RESTART")
         assertEquals(SatResult.UNSAT, result, "[php_5_4 reduce] verdict mismatch")
+    }
+
+    private companion object {
+        // php_10_9 is a large BENCHMARK instance; kept OPT-IN via -Dbigtrace for consistency
+        // with the other solvers (microsat's trace is only 4 MB, so it does not need the heap
+        // bump, but stays benchmark-only by default). php_9_8 always compares.
+        // See doc/benchmarks.typ and doc/repo-split.md.
+        val BENCHMARK_ONLY: Set<String> =
+            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
     }
 }

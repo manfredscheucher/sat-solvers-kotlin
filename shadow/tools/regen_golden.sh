@@ -65,6 +65,21 @@ for spec in "php_5_4:3" "php_6_5:3"; do
   printf '%-26s lines=%-6s RESTART=%s REDUCE=%s LSMAXLEMMAS=%s\n' "${name}_lemmas${lemmas}" "$lines" "$restart" "$reduce" "$lemmas" | tee -a "$manifest"
 done
 
+# php_5_4_reduce: force REDUCE *and* RESTART together (REDUCE is gated behind RESTART in
+# solve()), by lowering BOTH knobs -- LSMAXLEMMAS=3 and LSRESTARTFACTOR=20. Mirrors the
+# Kotlin MicroSat(maxLemmasInit=3, restartFactorInit=20) in ShadowTraceFilesTest.knobsForceReduceAndRestart.
+# This trace-covers the dual-location watch-pointer compaction in reduceDB byte-for-byte.
+reduce_cnf="$cnfdir/php_5_4.cnf"
+if [ -f "$reduce_cnf" ]; then
+  reduce_out="$golddir/php_5_4_reduce.trace"
+  LSMAXLEMMAS=3 LSRESTARTFACTOR=20 LSTRACE=1 "$cbin" "$reduce_cnf" | grep -vE '^(s |c )' > "$reduce_out" || true
+  restart=no; reduce=no
+  if grep -q '^RESTART$' "$reduce_out"; then restart=yes; fi
+  if grep -q '^REDUCE$'  "$reduce_out"; then reduce=yes; fi
+  lines=$(wc -l < "$reduce_out" | tr -d ' ')
+  printf '%-26s lines=%-6s RESTART=%s REDUCE=%s LSMAXLEMMAS=3 LSRESTARTFACTOR=20\n' "php_5_4_reduce" "$lines" "$restart" "$reduce" | tee -a "$manifest"
+fi
+
 echo "[5/5] done. golden traces in $golddir"
 echo
 echo "CNFs that exercise RESTART/REDUCE (the paths we want covered):"

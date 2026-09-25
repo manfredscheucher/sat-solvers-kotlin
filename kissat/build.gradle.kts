@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.androidLibrary)
 }
 
+// The Kotlin kissat port lives in the kissat/port submodule; only the port SOURCE is pulled in
+// here (via commonMain srcDirs). The shadow tests, sanity tests and the runtime benchmark
+// stay in THIS repo (they need shadow/ and ksat-common). Depends on the one ksat-common.
 kotlin {
     androidTarget()
     jvm()
@@ -20,6 +23,11 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
+            // port source comes from the submodule; pinned to the exact src dir so the
+            // submodule's nested common/ is never swept in. NOTE: a srcDir is resolved
+            // relative to THIS module's dir (kissat/), and the submodule is mounted at
+            // kissat/port, so the module-relative path is "port/...", not "kissat/port/...".
+            kotlin.srcDir("port/src/commonMain/kotlin")
             dependencies {
                 implementation(project(":ksat-common"))
             }
@@ -46,17 +54,27 @@ android {
     }
 }
 
-// Runtime benchmark: solves the shadow CNFs with the Kotlin kissat (core) port and
-// prints solve times. Pair with shadow/tools/benchmark_kissat.sh to compare against C.
+// The shadow trace test compares the largest benchmark instance php_10_9 byte-for-byte
+// only when -Dbigtrace is set (its golden trace is up to 156 MB / 8.6M lines). Propagate
+// that flag to the test JVM and give it an 8 GB heap so readLines() of that trace fits.
+//   ./gradlew :kissat:jvmTest -Dbigtrace
+tasks.withType<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>().configureEach {
+    val bigtrace = providers.systemProperty("bigtrace").orNull != null ||
+        providers.gradleProperty("bigtrace").orNull != null
+    if (bigtrace) {
+        systemProperty("bigtrace", "1")
+        maxHeapSize = "8g"
+    }
+}
+
+// Runtime benchmark on the shadow CNFs (JVM). Pair with shadow/tools to compare against C.
 //   ./gradlew :kissat:runBenchmark
-//   ./gradlew :kissat:runBenchmark --args="../shadow/cnf/php_7_6.cnf"
 tasks.register<JavaExec>("runBenchmark") {
     group = "benchmark"
-    description = "Run the Kotlin kissat (core) runtime benchmark on the shadow CNFs."
+    description = "Run the Kotlin kissat runtime benchmark on the shadow CNFs."
     dependsOn("jvmMainClasses")
     val jvmMain = kotlin.jvm().compilations.getByName("main")
     classpath = jvmMain.output.allOutputs + jvmMain.runtimeDependencyFiles
     mainClass.set("org.bytefred.ksat.kissat.Benchmark")
-    // run from the module dir so the CNF auto-locate walks up to shadow/cnf
     workingDir = projectDir
 }

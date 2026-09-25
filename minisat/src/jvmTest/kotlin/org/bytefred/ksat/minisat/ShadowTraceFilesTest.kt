@@ -49,7 +49,7 @@ class ShadowTraceFilesTest {
     private fun cases(shadow: File): List<Pair<File, File>> {
         val cnfDir = File(shadow, "cnf")
         val goldDir = File(shadow, "golden-minisat")
-        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") }?.sortedBy { it.name } ?: emptyList())
+        return (cnfDir.listFiles { f -> f.name.endsWith(".cnf") && f.nameWithoutExtension !in BENCHMARK_ONLY }?.sortedBy { it.name } ?: emptyList())
             .mapNotNull { cnf ->
                 val gold = File(goldDir, cnf.nameWithoutExtension + ".trace")
                 if (gold.isFile) cnf to gold else null
@@ -154,5 +154,14 @@ class ShadowTraceFilesTest {
         }
         assertTrue(sawRestart, "no CNF triggers RESTART -- RESTART path not trace-covered. Add a harder instance.")
         assertTrue(sawReduce, "no CNF triggers REDUCE -- REDUCE path not trace-covered. Add a harder instance.")
+    }
+
+    private companion object {
+        // php_10_9 is a large BENCHMARK instance (121 MB / 6.5M lines for minisat); the
+        // byte-for-byte comparison readLines() the whole file, so it needs an ~8 GB test
+        // heap and is OPT-IN via -Dbigtrace (the jvmTest task bumps the heap then). php_9_8
+        // (13 MB) always compares. See doc/benchmarks.typ and doc/repo-split.md.
+        val BENCHMARK_ONLY: Set<String> =
+            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
     }
 }

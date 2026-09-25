@@ -1,0 +1,15 @@
+[submodule "common"]
+	path = common
+	url = git@github.com:manfredscheucher/ksat-common.git
+[submodule "microsat/port"]
+	path = microsat/port
+	url = git@github.com:manfredscheucher/microsat-kotlin.git
+[submodule "minisat/port"]
+	path = minisat/port
+	url = git@github.com:manfredscheucher/minisat-kotlin.git
+[submodule "cadical/port"]
+	path = cadical/port
+	url = git@github.com:manfredscheucher/cadical-kotlin.git
+[submodule "kissat/port"]
+	path = kissat/port
+	url = git@github.com:manfredscheucher/kissat-kotlin.git
