@@ -165,11 +165,18 @@ class ShadowTraceFilesTest {
     }
 
     private companion object {
+        // -Dbigtrace enables the huge php_10_9 comparison. A bare -Dbigtrace (empty value) is ON;
+        // "false"/"0"/"no"/"off" (or absent) leave it off.
+        private fun bigtraceEnabled(): Boolean {
+            val v = System.getProperty("bigtrace") ?: return false
+            return v.lowercase() !in setOf("false", "0", "no", "off")
+        }
+
         // php_10_9 is a large BENCHMARK instance (33 MB / 1.8M lines for kissat); the
         // byte-for-byte comparison readLines() the whole file, so it is OPT-IN via
         // -Dbigtrace (the jvmTest task bumps the heap then). php_9_8 (8 MB) always compares.
         // See doc/benchmarks.typ and doc/repo-split.md.
         val BENCHMARK_ONLY: Set<String> =
-            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
+            if (bigtraceEnabled()) emptySet() else setOf("php_10_9")
     }
 }

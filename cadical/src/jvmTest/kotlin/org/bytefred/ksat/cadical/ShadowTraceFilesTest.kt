@@ -166,6 +166,13 @@ class ShadowTraceFilesTest {
     }
 
     private companion object {
+        // -Dbigtrace enables the huge php_10_9 comparison. A bare -Dbigtrace (empty value) is ON;
+        // "false"/"0"/"no"/"off" (or absent) leave it off.
+        private fun bigtraceEnabled(): Boolean {
+            val v = System.getProperty("bigtrace") ?: return false
+            return v.lowercase() !in setOf("false", "0", "no", "off")
+        }
+
         // php_9_8 and php_10_9 are large BENCHMARK instances (shadow/tools/gen_big_php.py).
         // php_10_9's golden trace is huge (156 MB / 8.6M lines for cadical) and the
         // byte-for-byte comparison readLines() the whole file, so it needs an ~8 GB test
@@ -173,6 +180,6 @@ class ShadowTraceFilesTest {
         // :cadical:jvmTest task bumps the heap when that property is set). php_9_8 is small
         // enough (40 MB) to always compare. See doc/benchmarks.typ and doc/repo-split.md.
         val BENCHMARK_ONLY: Set<String> =
-            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
+            if (bigtraceEnabled()) emptySet() else setOf("php_10_9")
     }
 }

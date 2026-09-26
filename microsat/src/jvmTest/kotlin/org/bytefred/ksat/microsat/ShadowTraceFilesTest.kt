@@ -183,11 +183,18 @@ class ShadowTraceFilesTest {
     }
 
     private companion object {
+        // -Dbigtrace enables the huge php_10_9 comparison. A bare -Dbigtrace (empty value) is ON;
+        // "false"/"0"/"no"/"off" (or absent) leave it off.
+        private fun bigtraceEnabled(): Boolean {
+            val v = System.getProperty("bigtrace") ?: return false
+            return v.lowercase() !in setOf("false", "0", "no", "off")
+        }
+
         // php_10_9 is a large BENCHMARK instance; kept OPT-IN via -Dbigtrace for consistency
         // with the other solvers (microsat's trace is only 4 MB, so it does not need the heap
         // bump, but stays benchmark-only by default). php_9_8 always compares.
         // See doc/benchmarks.typ and doc/repo-split.md.
         val BENCHMARK_ONLY: Set<String> =
-            if (System.getProperty("bigtrace") != null) emptySet() else setOf("php_10_9")
+            if (bigtraceEnabled()) emptySet() else setOf("php_10_9")
     }
 }

@@ -59,8 +59,11 @@ android {
 // that flag to the test JVM and give it an 8 GB heap so readLines() of that trace fits.
 //   ./gradlew :cadical:jvmTest -Dbigtrace
 tasks.withType<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>().configureEach {
-    val bigtrace = providers.systemProperty("bigtrace").orNull != null ||
-        providers.gradleProperty("bigtrace").orNull != null
+    // Enabled by -Dbigtrace/-Pbigtrace. A bare flag (empty value) is ON; "false"/"0"/"no"/"off"
+    // (or absent) leave it OFF.
+    fun truthy(v: String?) = v != null && v.lowercase() !in setOf("false", "0", "no", "off")
+    val bigtrace = truthy(providers.systemProperty("bigtrace").orNull) ||
+        truthy(providers.gradleProperty("bigtrace").orNull)
     if (bigtrace) {
         systemProperty("bigtrace", "1")
         maxHeapSize = "8g"

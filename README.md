@@ -72,12 +72,23 @@ Requires a JDK and the Gradle wrapper in this repo.
 ```bash
 # run all tests (unit + the trace-comparison shadow tests)
 ./gradlew jvmTest
+```
 
-# regenerate the golden C traces the shadow tests compare against (needs a C++ compiler).
-# One script per float solver (minisat, cadical, kissat) in shadow/tools/, each with an
-# -assume variant; minisat shown here as an example.
+The golden C traces are not checked in (they are regenerable and large). Without them the
+shadow tests skip their byte-for-byte comparison and `jvmTest` is still green, so a fresh
+clone passes out of the box. To actually run the trace comparison, regenerate the goldens
+first (needs a C++ compiler) — one script per float solver in `shadow/tools/`, each with an
+`-assume` variant; minisat shown here:
+
+```bash
 bash shadow/tools/regen_golden_minisat.sh
 bash shadow/tools/regen_golden_minisat_assume.sh   # the solve-under-assumptions traces
+```
+
+The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB test heap):
+
+```bash
+./gradlew :minisat:jvmTest -Dbigtrace
 ```
 
 ## License
