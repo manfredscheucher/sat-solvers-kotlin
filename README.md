@@ -13,14 +13,16 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 
 ## Modules
 
-- `common/` (Gradle module `:ksat-common`) is the `SatSolver` interface, `SatResult`,
+- `ksat-common/` (Gradle module `:ksat-common`) is the `SatSolver` interface, `SatResult`,
   `Traceable`, and the DIMACS parser. Every port implements this.
-- `microsat/` is microSAT (Marijn Heule). The smallest one; its heuristics are all
+- `solver/microsat/` is microSAT (Marijn Heule). The smallest one; its heuristics are all
   integer, so its trace matches the C exactly.
-- `minisat/` is MiniSat core CDCL — conflict-driven clause learning, the algorithm
+- `solver/minisat/` is MiniSat core CDCL — conflict-driven clause learning, the algorithm
   all four use (Één, Sörensson).
-- `cadical/` is CaDiCaL core (Biere et al.).
-- `kissat/` is kissat core (Biere et al.).
+- `solver/cadical/` is CaDiCaL core (Biere et al.).
+- `solver/kissat/` is kissat core (Biere et al.).
+- Each `solver/<name>/` is a thin wrapper (tests + build) around its `<name>-kotlin`
+  submodule, which holds the port source.
 - `ksat/` is one entry point, `Ksat`, that picks a solver at runtime (see below).
 - `shadow/` holds the C references (the verbatim originals and an instrumented copy
   that prints the trace), the test CNFs, and the scripts that build and diff them.
