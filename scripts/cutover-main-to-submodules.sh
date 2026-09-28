@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# HISTORICAL — describes the ORIGINAL split (common/ + <solver>/port/). The repo has since
+# moved to ksat-common/ + solver/<name>/<name>-kotlin/. Re-running this would regenerate the
+# OLD layout and undo that. Kept for reference only; do not run against the current tree.
+#
 # Cut the MAIN repo over to consuming the solver ports from submodules.
 #
 # RUN THIS ONLY AFTER the five submodules are added (see scripts/README-repo-split.md):

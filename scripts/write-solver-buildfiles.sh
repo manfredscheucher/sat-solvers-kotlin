@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# HISTORICAL — from the original repo split. Layout has since changed to
+# ksat-common/ + solver/<name>/<name>-kotlin/. Kept for reference only.
+#
 # Write the standalone build.gradle.kts + settings.gradle.kts for each solver sub-repo.
 # Standalone means: compile the port against ksat-common, which is mounted at common/
 # (a nested submodule). Tests/benchmarks/shadow are NOT here (they stay in the main repo),

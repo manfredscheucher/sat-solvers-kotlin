@@ -23,8 +23,10 @@ benchmarks and the `Ksat` facade — in the main repo, with the sub-repos linkin
   distinct `org.bytefred.ksat.SatSolver` types that collide (or diverge) once the main repo
   builds them together. So it is one repo, embedded as a **nested** git submodule in each
   solver repo, mounted at `common/`.
-- **Mount path `common/`.** In every repo the `ksat-common` submodule is mounted at
-  `common/`, not `ksat-common/`, so it reads as `<repo>/common`.
+- **Mount paths.** Inside each *solver* repo the `ksat-common` submodule is mounted at
+  `common/` (reads as `<repo>/common`). In the *main* repo it is mounted at `ksat-common/`
+  (path == repo name), and each solver submodule is mounted at
+  `solver/<name>/<name>-kotlin/` under its wrapper module `solver/<name>/`.
 - **Sub-repos contain only the port source** (`src/commonMain/.../<Solver>.kt`) plus the
   gradle scaffolding needed to build standalone. The benchmarks (`jvmMain`), the tests
   (`commonTest` + `jvmTest`, including the shadow tests), the `shadow/` dir, the `ksat`
@@ -36,12 +38,13 @@ The hazard: if the main build ever saw two `ksat-common` Gradle projects (the to
 and a nested copy inside a solver submodule), the `org.bytefred.ksat` package would be on the
 classpath twice and the facade's `SatSolver` would differ from the solver's. Avoided by:
 
-- The main `settings.gradle.kts` binds `:ksat-common` **once** (to the top-level `common/`
-  submodule) and includes each solver once. The nested `common/` inside each solver
-  submodule is **never** included in the main build — it exists only so the solver builds
-  standalone.
-- Each solver module in the main repo keeps a **thin** `build.gradle.kts` that:
-  - points its `commonMain` `srcDirs` at the submodule's `src/commonMain/...` (the port),
+- The main `settings.gradle.kts` binds `:ksat-common` **once** (to the top-level
+  `ksat-common/` submodule) and includes each solver once, each remapped to its wrapper dir
+  `solver/<name>/`. The nested `common/` inside each solver submodule is **never** included
+  in the main build — it exists only so the solver builds standalone.
+- Each solver module in the main repo keeps a **thin** `build.gradle.kts` at `solver/<name>/`
+  that:
+  - points its `commonMain` `srcDirs` at the `<name>-kotlin/src/commonMain/...` submodule (the port),
   - keeps `commonTest` / `jvmTest` `srcDirs` in the main repo (the shadow + sanity tests),
   - declares `implementation(project(":ksat-common"))` → the single top-level one.
 - `srcDirs` are pinned to the exact `src/<sourceSet>` path, never a parent, so the nested
@@ -94,3 +97,22 @@ See `scripts/README-repo-split.md` for the exact create/init/push/submodule-add 
 The local staging (source, build files, READMEs, LICENSEs) is already prepared under
 `~/github/<repo>` by `scripts/stage-solver-subrepos.sh` + `write-solver-buildfiles.sh` +
 `write-solver-readmes.sh`.
+
+## Later restructure (solver/ layout + ksat-extra)
+
+After the split, the main-repo layout was tidied so the repo reads as a Kotlin product:
+
+- **ksat-common mount `common/` → `ksat-common/`** (path == repo name). Only the *main*
+  repo's mount changed; inside each solver repo the nested submodule stays at `common/`.
+- **Solvers grouped under `solver/`.** Each `<solver>/` wrapper + its `<solver>/port/`
+  submodule became `solver/<name>/` (wrapper: build + tests) with the submodule at
+  `solver/<name>/<name>-kotlin/`. Gradle module names stay `:microsat`/`:minisat`/… (so
+  consumers like luckySweep keep referencing `:ksat`/`:minisat`); `settings.gradle.kts` adds
+  a `projectDir` remap per solver. The wrapper's `srcDir` stays pinned to the exact
+  `<name>-kotlin/src/commonMain/kotlin` so the nested `common/` is never swept in.
+- **`shadow/` moves out to its own optional repo `ksat-extra`** (mounted at `ksat-extra/`,
+  `update = none` so a default `--recursive` clone skips it). Reason: shadowing + benchmarks
+  + the C references are dev/verification material, not the product, and the C sources
+  skewed GitHub's language bar. Only the current state was copied over (no history rewrite).
+- The original split scripts under `scripts/` are marked HISTORICAL — they regenerate the
+  pre-restructure layout and must not be re-run against the current tree.

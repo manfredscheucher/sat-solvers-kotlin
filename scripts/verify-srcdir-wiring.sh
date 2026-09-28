@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# HISTORICAL — from the original repo split (probe used bare <solver>/ wiring). Layout has
+# since changed to solver/<name>/<name>-kotlin/. Kept for reference only.
+#
 # Prove the main-repo srcDir wiring compiles BEFORE the real submodules exist.
 #
 # It builds a throwaway probe project that reproduces exactly what a main-repo solver

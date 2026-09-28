@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# HISTORICAL — from the original repo split. Layout has since changed to
+# ksat-common/ + solver/<name>/<name>-kotlin/. Kept for reference only.
+#
 # Stage the four standalone solver sub-repos under ~/github, from the current
 # main-repo checkout. This is LOCAL only: it copies the solver source + gradle
 # scaffolding + README/LICENSE into ~/github/<solver>-kotlin. No git, no remote.

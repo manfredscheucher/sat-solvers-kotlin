@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# HISTORICAL — from the original repo split. Layout has since changed to
+# ksat-common/ + solver/<name>/<name>-kotlin/. Kept for reference only.
+#
 # Write a unified README.md + LICENSE for each solver sub-repo. Consistent structure:
 # one-liner on what it is, that it is a byte-for-byte Kotlin port, and that the tests,
 # shadow harness, benchmarks, facade and docs all live in the main repo. Re-runnable.

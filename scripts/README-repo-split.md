@@ -1,5 +1,10 @@
 # Repo split — the remote steps (Manfred runs these)
 
+> **HISTORICAL.** These steps created the original split with the ksat-common submodule at
+> `common/` and each solver at `<solver>/port/`. The repo has since moved to `ksat-common/`
+> and `solver/<name>/<name>-kotlin/`. Kept as a record of how the split was done; the exact
+> paths/commands below are the old layout.
+
 All local staging is done. Everything below touches GitHub / git remotes, so **Manfred runs
 it** (Claude never pushes, clones, fetches, or adds submodules). The order matters because
 of the nested submodule: `ksat-common` must be on GitHub before it can be added into the
