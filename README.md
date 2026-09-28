@@ -13,8 +13,8 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 
 ## Modules
 
-- `ksat-common/` is the `SatSolver` interface, `SatResult`, `Traceable`, and the
-  DIMACS parser. Every port implements this.
+- `common/` (Gradle module `:ksat-common`) is the `SatSolver` interface, `SatResult`,
+  `Traceable`, and the DIMACS parser. Every port implements this.
 - `microsat/` is microSAT (Marijn Heule). The smallest one; its heuristics are all
   integer, so its trace matches the C exactly.
 - `minisat/` is MiniSat core CDCL — conflict-driven clause learning, the algorithm
@@ -57,6 +57,10 @@ s.addClause(intArrayOf(-1, 2))              // +v means "var v true", -v means "
 if (s.solve(assumptions = intArrayOf(-1)) == SatResult.SAT) {
     val var2 = s.valueOf(2)   // read var 2 in the model of this solve
 }
+
+// same instance, no clause reload: ask again under different assumptions
+if (s.solve(assumptions = intArrayOf(1)) == SatResult.SAT) { /* ... */ }
+val plain = s.solve()                       // or with no assumptions at all
 ```
 
 Variables are `1..numVars`; a literal is a signed variable (`3` = var 3 true, `-3` =
@@ -67,7 +71,22 @@ so you can keep one solver around and query it many times without reloading the 
 
 ## Build & run
 
-Requires a JDK and the Gradle wrapper in this repo.
+Requires a JDK and the Gradle wrapper in this repo. The solvers and the shared
+`ksat-common` are git submodules, so clone recursively (a plain `git clone` leaves
+them empty and the build fails with `No matching variant of project :ksat-common`):
+
+```bash
+git clone --recursive https://github.com/manfredscheucher/sat-solvers-kotlin.git
+cd sat-solvers-kotlin
+```
+
+Already cloned without `--recursive`? Pull the submodules in:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then build and test:
 
 ```bash
 # run all tests (unit + the trace-comparison shadow tests)
