@@ -21,7 +21,7 @@ kotlin {
     linuxX64()
     mingwX64()
     // Native macOS executable for the Kotlin/Native-vs-C runtime benchmark. Entry point:
-    // minisat/src/macosArm64Main/.../Benchmark.kt (stays in the main repo).
+    // solver/minisat/src/macosArm64Main/.../Benchmark.kt (stays in the main repo).
     macosArm64 {
         binaries { executable { entryPoint = "org.bytefred.ksat.minisat.main" } }
     }
@@ -30,9 +30,10 @@ kotlin {
         val commonMain by getting {
             // port source comes from the submodule; pinned to the exact src dir so the
             // submodule's nested common/ is never swept in. NOTE: a srcDir is resolved
-            // relative to THIS module's dir (minisat/), and the submodule is mounted at
-            // minisat/port, so the module-relative path is "port/...", not "minisat/port/...".
-            kotlin.srcDir("port/src/commonMain/kotlin")
+            // relative to THIS module's dir (solver/minisat/), and the submodule is mounted
+            // at solver/minisat/minisat-kotlin, so the module-relative path is
+            // "minisat-kotlin/...", not "solver/minisat/minisat-kotlin/...".
+            kotlin.srcDir("minisat-kotlin/src/commonMain/kotlin")
             dependencies {
                 implementation(project(":ksat-common"))
             }

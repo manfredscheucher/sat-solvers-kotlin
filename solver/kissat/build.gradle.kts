@@ -25,9 +25,10 @@ kotlin {
         val commonMain by getting {
             // port source comes from the submodule; pinned to the exact src dir so the
             // submodule's nested common/ is never swept in. NOTE: a srcDir is resolved
-            // relative to THIS module's dir (kissat/), and the submodule is mounted at
-            // kissat/port, so the module-relative path is "port/...", not "kissat/port/...".
-            kotlin.srcDir("port/src/commonMain/kotlin")
+            // relative to THIS module's dir (solver/kissat/), and the submodule is mounted
+            // at solver/kissat/kissat-kotlin, so the module-relative path is
+            // "kissat-kotlin/...", not "solver/kissat/kissat-kotlin/...".
+            kotlin.srcDir("kissat-kotlin/src/commonMain/kotlin")
             dependencies {
                 implementation(project(":ksat-common"))
             }

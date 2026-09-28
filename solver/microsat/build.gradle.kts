@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
 }
 
-// The Kotlin cadical port lives in the cadical/port submodule; only the port SOURCE is pulled in
+// The Kotlin microsat port lives in the microsat/port submodule; only the port SOURCE is pulled in
 // here (via commonMain srcDirs). The shadow tests, sanity tests and the runtime benchmark
 // stay in THIS repo (they need shadow/ and ksat-common). Depends on the one ksat-common.
 kotlin {
@@ -25,9 +25,10 @@ kotlin {
         val commonMain by getting {
             // port source comes from the submodule; pinned to the exact src dir so the
             // submodule's nested common/ is never swept in. NOTE: a srcDir is resolved
-            // relative to THIS module's dir (cadical/), and the submodule is mounted at
-            // cadical/port, so the module-relative path is "port/...", not "cadical/port/...".
-            kotlin.srcDir("port/src/commonMain/kotlin")
+            // relative to THIS module's dir (solver/microsat/), and the submodule is mounted
+            // at solver/microsat/microsat-kotlin, so the module-relative path is
+            // "microsat-kotlin/...", not "solver/microsat/microsat-kotlin/...".
+            kotlin.srcDir("microsat-kotlin/src/commonMain/kotlin")
             dependencies {
                 implementation(project(":ksat-common"))
             }
@@ -47,7 +48,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.bytefred.ksat.cadical"
+    namespace = "org.bytefred.ksat.microsat"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -57,7 +58,7 @@ android {
 // The shadow trace test compares the largest benchmark instance php_10_9 byte-for-byte
 // only when -Dbigtrace is set (its golden trace is up to 156 MB / 8.6M lines). Propagate
 // that flag to the test JVM and give it an 8 GB heap so readLines() of that trace fits.
-//   ./gradlew :cadical:jvmTest -Dbigtrace
+//   ./gradlew :microsat:jvmTest -Dbigtrace
 tasks.withType<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>().configureEach {
     // Enabled by -Dbigtrace/-Pbigtrace. A bare flag (empty value) is ON; "false"/"0"/"no"/"off"
     // (or absent) leave it OFF.
@@ -71,13 +72,13 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>().co
 }
 
 // Runtime benchmark on the shadow CNFs (JVM). Pair with shadow/tools to compare against C.
-//   ./gradlew :cadical:runBenchmark
+//   ./gradlew :microsat:runBenchmark
 tasks.register<JavaExec>("runBenchmark") {
     group = "benchmark"
-    description = "Run the Kotlin cadical runtime benchmark on the shadow CNFs."
+    description = "Run the Kotlin microsat runtime benchmark on the shadow CNFs."
     dependsOn("jvmMainClasses")
     val jvmMain = kotlin.jvm().compilations.getByName("main")
     classpath = jvmMain.output.allOutputs + jvmMain.runtimeDependencyFiles
-    mainClass.set("org.bytefred.ksat.cadical.Benchmark")
+    mainClass.set("org.bytefred.ksat.microsat.Benchmark")
     workingDir = projectDir
 }
