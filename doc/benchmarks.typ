@@ -2,7 +2,7 @@
 
 #show: body => ks-doc(
   title: "ksat / sat-solvers-kotlin",
-  subtitle: "Runtime benchmarks: C vs Kotlin/JVM vs Kotlin/Native",
+  subtitle: "MiniSat runtime: C vs Kotlin/JVM vs Kotlin/Native",
   version: "Measured, not estimated",
   body,
 )
@@ -31,12 +31,20 @@ Machine: Apple Silicon (arm64), macOS. All three run the SAME MiniSat algorithm
 
 = Results
 
+Only *MiniSat* has a full C-vs-Kotlin runtime comparison here. CaDiCaL, kissat and microSAT
+are trace-verified against their C originals (see the shadowing doc) but not yet
+runtime-benchmarked — see the caveats below.
+
+Columns: the first three are absolute solve *times* (seconds, lower is better); the last two
+are *slowdown vs C* (Kotlin time ÷ C time).
+
 #table(
   columns: 6,
   align: (left, right, right, right, right, right),
-  table.header[instance][C][Kotlin/JVM][Kotlin/Native][JVM / C][Native / C],
-  [php_9_8],  [0.180 s], [0.239 s], [0.650 s], [1.33×], [3.61×],
-  [php_10_9], [2.606 s], [3.526 s], [9.641 s], [1.35×], [3.70×],
+  table.cell(colspan: 4)[*time (s)*], table.cell(colspan: 2)[*slowdown vs C*],
+  table.header[instance][C][Kotlin/JVM][Kotlin/Native][JVM][Native],
+  [php_9_8],  [0.180], [0.239], [0.650], [1.33×], [3.61×],
+  [php_10_9], [2.606], [3.526], [9.641], [1.35×], [3.70×],
 )
 
 The ratios are stable across both instances:
@@ -81,7 +89,7 @@ penalty *without* C's zero-overhead memory model.
   These are *JVM and macOS-arm64-native* numbers on one machine. They are not a claim
   about every platform or every instance family — but the JVM/C and Native/C ratios are
   each stable across the two PHP sizes measured. No perf statement is made without these
-  measured numbers (see also `shadow/BENCHMARK_RESULTS.md` for the raw table).
+  measured numbers (see also `ksat-extra/shadow/BENCHMARK_RESULTS.md` for the raw table).
 
   For the game (luckySweeper) this matters: it runs the Kotlin MiniSat on the *JVM*
   (Android/desktop), i.e. the ~1.3×-of-C column — the fast one. Kotlin/Native would be
@@ -90,16 +98,20 @@ penalty *without* C's zero-overhead memory model.
 
 = Reproduce
 
+The CNFs and the C reference live in the optional `ksat-extra` submodule
+(`git submodule update --init ksat-extra`):
+
 ```
 # C reference
-clang++ -O2 -std=c++11 -o shadow/minisat-c/minisat_bench shadow/minisat-c/minisat_trace.cc
-time shadow/minisat-c/minisat_bench shadow/cnf/php_10_9.cnf
+clang++ -O2 -std=c++11 -o ksat-extra/shadow/minisat-c/minisat_bench \
+  ksat-extra/shadow/minisat-c/minisat_trace.cc
+time ksat-extra/shadow/minisat-c/minisat_bench ksat-extra/shadow/cnf/php_10_9.cnf
 
 # Kotlin/JVM
-./gradlew :minisat:runBenchmark --args="$(pwd)/shadow/cnf/php_10_9.cnf"
+./gradlew :minisat:runBenchmark --args="$(pwd)/ksat-extra/shadow/cnf/php_10_9.cnf"
 
 # Kotlin/Native (macOS arm64, release)
 ./gradlew :minisat:linkReleaseExecutableMacosArm64
-minisat/build/bin/macosArm64/releaseExecutable/minisat.kexe \
-  shadow/cnf/php_9_8.cnf shadow/cnf/php_10_9.cnf
+solver/minisat/build/bin/macosArm64/releaseExecutable/minisat.kexe \
+  ksat-extra/shadow/cnf/php_9_8.cnf ksat-extra/shadow/cnf/php_10_9.cnf
 ```
