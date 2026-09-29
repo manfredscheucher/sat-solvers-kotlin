@@ -81,7 +81,7 @@ object Benchmark {
     private fun locateCnfDir(): File? {
         var dir: File? = File(System.getProperty("user.dir")).absoluteFile
         while (dir != null) {
-            val candidate = File(dir, "shadow/cnf")
+            val candidate = File(dir, "ksat-extra/shadow/cnf")
             if (candidate.isDirectory) return candidate
             dir = dir.parentFile
         }

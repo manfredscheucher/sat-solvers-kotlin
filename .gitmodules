@@ -13,3 +13,7 @@
 [submodule "solver/kissat/kissat-kotlin"]
 	path = solver/kissat/kissat-kotlin
 	url = https://github.com/manfredscheucher/kissat-kotlin.git
+[submodule "ksat-extra"]
+	path = ksat-extra
+	url = git@github.com:manfredscheucher/ksat-extra.git
+	update = none

@@ -24,8 +24,10 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 - Each `solver/<name>/` is a thin wrapper (tests + build) around its `<name>-kotlin`
   submodule, which holds the port source.
 - `ksat/` is one entry point, `Ksat`, that picks a solver at runtime (see below).
-- `shadow/` holds the C references (the verbatim originals and an instrumented copy
-  that prints the trace), the test CNFs, and the scripts that build and diff them.
+- `ksat-extra/` is an **optional** submodule (a default `git clone --recursive` skips it)
+  holding the shadow harness: the C references (verbatim originals + instrumented trace
+  copies), the test CNFs, the benchmark data, and the scripts that build and diff them.
+  Pull it in with `git submodule update --init ksat-extra`.
 
 ## How the ports were done
 
@@ -95,15 +97,18 @@ Then build and test:
 ./gradlew jvmTest
 ```
 
-The golden C traces are not checked in (they are regenerable and large). Without them the
-shadow tests skip their byte-for-byte comparison and `jvmTest` is still green, so a fresh
-clone passes out of the box. To actually run the trace comparison, regenerate the goldens
-first (needs a C++ compiler) — one script per float solver in `shadow/tools/`, each with an
-`-assume` variant; minisat shown here:
+The shadow harness lives in the optional `ksat-extra` submodule, which a default
+`git clone --recursive` does NOT pull. Without it (or without the golden traces, which are
+regenerable and not checked in) the shadow tests skip their byte-for-byte comparison and
+`jvmTest` is still green, so a fresh clone passes out of the box. To actually run the trace
+comparison, check out `ksat-extra` and regenerate the goldens (needs a C++ compiler) — one
+script per float solver in `ksat-extra/shadow/tools/`, each with an `-assume` variant;
+minisat shown here:
 
 ```bash
-bash shadow/tools/regen_golden_minisat.sh
-bash shadow/tools/regen_golden_minisat_assume.sh   # the solve-under-assumptions traces
+git submodule update --init ksat-extra
+bash ksat-extra/shadow/tools/regen_golden_minisat.sh
+bash ksat-extra/shadow/tools/regen_golden_minisat_assume.sh   # solve-under-assumptions traces
 ```
 
 The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB test heap):
@@ -118,7 +123,8 @@ MIT, see [LICENSE](LICENSE). Each port is a derivative work of an MIT-licensed o
 (microSAT © Marijn Heule; MiniSat © Niklas Eén & Niklas Sörensson; CaDiCaL and kissat © Armin
 Biere and contributors). Original license texts are preserved under `licenses/`, and the
 per-solver attribution is in [LICENSE](LICENSE) and each source file's header. The original
-C/C++ solver sources are included under `shadow/` as references for the shadow tests.
+C/C++ solver sources are included in the `ksat-extra` submodule (`ksat-extra/shadow/`) as
+references for the shadow tests.
 
 ## Development
 

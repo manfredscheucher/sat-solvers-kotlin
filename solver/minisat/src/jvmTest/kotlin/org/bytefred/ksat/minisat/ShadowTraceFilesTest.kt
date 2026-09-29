@@ -37,7 +37,7 @@ class ShadowTraceFilesTest {
     private fun locateShadowDir(): File? {
         var dir: File? = File(System.getProperty("user.dir")).absoluteFile
         while (dir != null) {
-            val candidate = File(dir, "shadow")
+            val candidate = File(dir, "ksat-extra/shadow")
             if (File(candidate, "cnf").isDirectory && File(candidate, "golden-minisat").isDirectory) {
                 return candidate
             }
