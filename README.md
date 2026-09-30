@@ -41,10 +41,10 @@ For the integer-heuristic solver (microSAT) the traces match exactly. For the on
 `double` VSIDS (variable-activity) scores they match as long as the float arithmetic runs
 in the same order as the C, which is what the ports do. The float width is a per-solver
 option (32- or 64-bit), defaulting to whatever the original C uses so the traces line up —
-32-bit for MiniSat, 64-bit for CaDiCaL and kissat. The methodology, the known limits, and the
-per-solver status are in [`doc/shadowing-methodology.pdf`](doc/shadowing-methodology.pdf); a
-runtime comparison of C vs Kotlin/JVM vs Kotlin/Native is in
-[`doc/benchmarks.pdf`](doc/benchmarks.pdf).
+32-bit for MiniSat, 64-bit for CaDiCaL and kissat. The methodology, the known limits, the
+per-solver status and the runtime benchmarks all live in the optional `ksat-extra` submodule
+(`ksat-extra/doc/`), together with the shadow harness and the multiplatform examples — see
+[Extras](#extras).
 
 ## Picking a solver
 
@@ -116,6 +116,28 @@ The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB tes
 ```bash
 ./gradlew :minisat:jvmTest -Dbigtrace
 ```
+
+## Extras
+
+This repo stays lean — just the solvers, the `Ksat` facade and this README. Everything else
+lives in the **optional** `ksat-extra` submodule, which a default `git clone --recursive` does
+NOT pull. It holds:
+
+- **Multiplatform examples** (`ksat-extra/demo/`) — one small SAT demo (enumerate all models
+  of an XOR, then UNSAT) compiled to every KMP target: JVM, Android, JS, Wasm, Linux, Windows
+  and iOS.
+- **Docs** (`ksat-extra/doc/`) — the shadowing methodology, per-solver status, and the runtime
+  benchmarks.
+- **Shadow harness** (`ksat-extra/shadow/`) — the C references, test CNFs and trace scripts.
+
+Pull it in with:
+
+```bash
+git submodule update --init ksat-extra
+```
+
+The examples build against the solvers via relative paths, so they only work with `ksat-extra`
+checked out inside this repo (the normal case), not as a standalone clone.
 
 ## License
 

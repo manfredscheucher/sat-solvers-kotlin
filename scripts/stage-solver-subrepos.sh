@@ -8,7 +8,7 @@
 #
 # The nested `ksat-common` (mounted as common/) is copied in here as a plain dir so
 # the repo builds standalone right away; when the real GitHub repos exist you replace
-# common/ with a proper `git submodule add` (see doc/repo-split.md in the main repo).
+# common/ with a proper `git submodule add` (see ksat-extra/doc/repo-split.md).
 #
 # Re-runnable: wipes and re-stages each target's non-.git content.
 set -euo pipefail
