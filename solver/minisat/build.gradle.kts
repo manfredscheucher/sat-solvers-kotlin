@@ -20,6 +20,7 @@ kotlin {
     iosX64()
     linuxX64()
     mingwX64()
+    macosX64()
     // Native macOS executable for the Kotlin/Native-vs-C runtime benchmark. Entry point:
     // solver/minisat/src/macosArm64Main/.../Benchmark.kt (stays in the main repo).
     macosArm64 {
