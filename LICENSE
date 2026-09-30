@@ -33,11 +33,12 @@ same line; the full original license texts are in licenses/.
              (licenses/microsat-LICENSE.txt)
   MiniSat  — Copyright (c) 2003-2010 Niklas Eén, Niklas Sörensson; Kotlin port by Manfred Scheucher 2026
              (licenses/minisat-LICENSE.txt)
-  CaDiCaL  — Copyright (c) 2016-2026 Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
-             (licenses/cadical-LICENSE.txt)
-  kissat   — Copyright (c) 2019-2025 Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
-             (licenses/kissat-LICENSE.txt)
+  CaDiCaL  — Copyright (c) Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
+             (licenses/cadical-LICENSE.txt for the full copyright lines)
+  kissat   — Copyright (c) Armin Biere and contributors; Kotlin port by Manfred Scheucher 2026
+             (licenses/kissat-LICENSE.txt for the full copyright lines)
 
 The cadical and kissat ports cover the CDCL search core only, not the
-inprocessing machinery. The original solver sources are included under shadow/
-as references for the byte-for-byte shadow tests.
+inprocessing machinery. The original solver sources are included in the optional
+ksat-extra submodule (ksat-extra/shadow/) as references for the byte-for-byte
+shadow tests.
