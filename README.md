@@ -48,12 +48,12 @@ per-solver status and the runtime benchmarks all live in the optional `ksat-extr
 
 ## Picking a solver
 
-The three larger solvers take the same CNF (the clause set to solve) and give back the
-same answer, so switching between them is a one-word change (microSAT is ported and shadow-tested
-too, but not wired into the `Ksat` picker):
+All four solvers take the same CNF (the clause set to solve) and give back the same answer,
+so switching between them is a one-word change. Note microSAT has no assumptions path, so
+`solve(assumptions)` with `Solver.MICROSAT` throws:
 
 ```kotlin
-val s = Ksat(Solver.CADICAL, numVars = 3)   // or MINISAT / KISSAT
+val s = Ksat(Solver.CADICAL, numVars = 3)   // or MICROSAT / MINISAT / KISSAT
 s.addClause(intArrayOf(1, 2, 3))            // clauses are signed DIMACS literals:
 s.addClause(intArrayOf(-1, 2))              // +v means "var v true", -v means "false"
 

@@ -4,10 +4,11 @@ import org.bytefred.ksat.SatResult
 import org.bytefred.ksat.SatSolver
 import org.bytefred.ksat.cadical.CaDiCaL
 import org.bytefred.ksat.kissat.Kissat
+import org.bytefred.ksat.microsat.MicroSat
 import org.bytefred.ksat.minisat.MiniSat
 
 /** The ported solvers you can pick between. */
-enum class Solver { MINISAT, CADICAL, KISSAT }
+enum class Solver { MICROSAT, MINISAT, CADICAL, KISSAT }
 
 /**
  * One uniform entry point over the ported SAT solvers, in the spirit of PySAT: the
@@ -34,6 +35,7 @@ class Ksat(
 ) : SatSolver {
 
     private val delegate: SatSolver = when (solver) {
+        Solver.MICROSAT -> MicroSat(numVars)
         Solver.MINISAT -> MiniSat(numVars)
         Solver.CADICAL -> CaDiCaL(numVars)
         Solver.KISSAT -> Kissat(numVars)

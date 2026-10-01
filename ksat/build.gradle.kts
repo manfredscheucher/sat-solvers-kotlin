@@ -27,6 +27,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":ksat-common"))
+                implementation(project(":microsat"))
                 implementation(project(":minisat"))
                 implementation(project(":cadical"))
                 implementation(project(":kissat"))
