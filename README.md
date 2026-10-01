@@ -34,9 +34,6 @@ cd sat-solvers-kotlin
 ./gradlew jvmTest
 ```
 
-(`--recursive` matters: a plain clone leaves the submodules empty and the build fails with
-`No matching variant of project :ksat-common`. Forgot it? `git submodule update --init --recursive`.)
-
 ## ksat-extra (optional)
 
 An optional submodule [ksat-extra](https://github.com/manfredscheucher/ksat-extra) adds the fun
