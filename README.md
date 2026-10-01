@@ -27,7 +27,7 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 - `ksat-extra/` is an **optional** submodule (a default `git clone --recursive` skips it)
   holding the shadow harness: the C references (verbatim originals + instrumented trace
   copies), the test CNFs, the benchmark data, and the scripts that build and diff them.
-  Pull it in with `git submodule update --init ksat-extra`.
+  Pull it in with `git submodule update --init --checkout ksat-extra`.
 
 ## How the ports were done
 
@@ -106,7 +106,7 @@ script per float solver in `ksat-extra/shadow/tools/`, each with an `-assume` va
 minisat shown here:
 
 ```bash
-git submodule update --init ksat-extra
+git submodule update --init --checkout ksat-extra
 bash ksat-extra/shadow/tools/regen_golden_minisat.sh
 bash ksat-extra/shadow/tools/regen_golden_minisat_assume.sh   # solve-under-assumptions traces
 ```
@@ -133,7 +133,7 @@ NOT pull. It holds:
 Pull it in with:
 
 ```bash
-git submodule update --init ksat-extra
+git submodule update --init --checkout ksat-extra
 ```
 
 The examples build against the solvers via relative paths, so they only work with `ksat-extra`
