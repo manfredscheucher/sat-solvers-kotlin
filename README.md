@@ -24,10 +24,9 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 - Each `solver/<name>/` is a thin wrapper (tests + build) around its `<name>-kotlin`
   submodule, which holds the port source.
 - `ksat/` is one entry point, `Ksat`, that picks a solver at runtime (see below).
-- `ksat-extra/` is an **optional** submodule (a default `git clone --recursive` skips it)
-  holding the shadow harness: the C references (verbatim originals + instrumented trace
-  copies), the test CNFs, the benchmark data, and the scripts that build and diff them.
-  Pull it in with `git submodule update --init --checkout ksat-extra`.
+- `ksat-extra/` is an **optional** submodule with the fun extras: a multiplatform demo you
+  can run on JVM, browser (JS/Wasm), Android and iOS, the runtime benchmarks, the docs, and
+  the shadow/trace harness. See [Extras](#extras).
 
 ## How the ports were done
 
@@ -119,24 +118,27 @@ The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB tes
 
 ## Extras
 
-This repo stays lean — just the solvers, the `Ksat` facade and this README. Everything else
-lives in the **optional** `ksat-extra` submodule, which a default `git clone --recursive` does
-NOT pull. It holds:
-
-- **Multiplatform examples** (`ksat-extra/demo/`) — one small SAT demo (enumerate all models
-  of an XOR, then UNSAT) compiled to every KMP target: JVM, Android, JS, Wasm, Linux, Windows
-  and iOS.
-- **Docs** (`ksat-extra/doc/`) — the shadowing methodology, per-solver status, and the runtime
-  benchmarks.
-- **Shadow harness** (`ksat-extra/shadow/`) — the C references, test CNFs and trace scripts.
-
-Pull it in with:
+This repo stays lean — just the solvers, the `Ksat` facade and this README. The interesting
+extras live in the separate **optional** `ksat-extra` submodule, which a default
+`git clone --recursive` does NOT pull. Get it with:
 
 ```bash
 git submodule update --init --checkout ksat-extra
 ```
 
-The examples build against the solvers via relative paths, so they only work with `ksat-extra`
+What's in there:
+
+- **A multiplatform demo** (`ksat-extra/demo/`) — enumerate all models of XOR(x1,x2) with each
+  solver, then UNSAT. The SAME Kotlin runs on JVM, in the browser (JS/Wasm), on Android and on
+  iOS, with one-line run scripts for each (`ksat-extra/scripts/`). Screenshots of all four are
+  in the [ksat-extra README](https://github.com/manfredscheucher/ksat-extra).
+
+- **Runtime benchmarks** (`ksat-extra/doc/benchmarks.*`) — C vs Kotlin/JVM vs Kotlin/Native.
+- **Docs** (`ksat-extra/doc/`) — the shadowing methodology and per-solver status.
+- **Shadow/trace harness** (`ksat-extra/shadow/`) — the C references and trace scripts used to
+  check each port against its original (the byte-for-byte comparison behind the main tests).
+
+The demo builds against the solvers via relative paths, so it only works with `ksat-extra`
 checked out inside this repo (the normal case), not as a standalone clone.
 
 ## License
