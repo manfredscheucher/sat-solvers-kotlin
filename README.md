@@ -28,9 +28,24 @@ literals for one solve and backtracks, so you can keep one solver and query it r
 
 ## Build
 
+Requires a JDK and the Gradle wrapper in this repo. The solvers and the shared `ksat-common`
+are git submodules, so clone recursively (a plain `git clone` leaves them empty and the build
+fails with `No matching variant of project :ksat-common`):
+
 ```bash
 git clone --recursive https://github.com/manfredscheucher/sat-solvers-kotlin.git
 cd sat-solvers-kotlin
+```
+
+Already cloned without `--recursive`? Pull the submodules in:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then build and test:
+
+```bash
 ./gradlew jvmTest
 ```
 
