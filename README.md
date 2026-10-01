@@ -30,20 +30,13 @@ full solver trace across a range of tests (see [How the ports were done](#how-th
 
 ## How the ports were done
 
-Each port is written line by line against the original C. To check it actually behaves the
-same at runtime, not just on the final SAT/UNSAT answer, an instrumented build of both the C
-and the Kotlin prints a trace of every decision, propagation and conflict, and the tests
-compare the two traces. When they match, the port took the same steps in the same order with
-the same values as the C.
+Each port is written line by line against the original C, then checked at runtime, not just on
+the SAT/UNSAT answer: an instrumented build of both prints a trace of every decision,
+propagation and conflict, and the tests compare the two traces. When they match, the port took
+the same steps in the same order with the same values as the C.
 
-For the integer-heuristic solver (microSAT) the traces match exactly. For the ones with
-`double` VSIDS (variable-activity) scores they match as long as the float arithmetic runs
-in the same order as the C, which is what the ports do. The float width is a per-solver
-option (32- or 64-bit), defaulting to whatever the original C uses so the traces line up —
-32-bit for MiniSat, 64-bit for CaDiCaL and kissat. The methodology, the known limits, the
-per-solver status and the runtime benchmarks all live in the optional `ksat-extra` submodule
-(`ksat-extra/doc/`), together with the shadow harness and the multiplatform examples — see
-[Extras](#extras).
+The methodology, the float-arithmetic caveats, the per-solver status and the benchmarks live in
+[ksat-extra](https://github.com/manfredscheucher/ksat-extra) (see [Extras](#extras)).
 
 ## Picking a solver
 
@@ -92,51 +85,18 @@ git submodule update --init --recursive
 Then build and test:
 
 ```bash
-# run all tests (unit + the trace-comparison shadow tests)
 ./gradlew jvmTest
-```
-
-The shadow harness lives in the optional `ksat-extra` submodule, which a default
-`git clone --recursive` does NOT pull. Without it (or without the golden traces, which are
-regenerable and not checked in) the shadow tests skip their byte-for-byte comparison and
-`jvmTest` is still green, so a fresh clone passes out of the box. To actually run the trace
-comparison, check out `ksat-extra` and regenerate the goldens (needs a C++ compiler) — one
-script per float solver in `ksat-extra/shadow/tools/`, each with an `-assume` variant;
-minisat shown here:
-
-```bash
-git submodule update --init --checkout ksat-extra
-bash ksat-extra/shadow/tools/regen_golden_minisat.sh
-bash ksat-extra/shadow/tools/regen_golden_minisat_assume.sh   # solve-under-assumptions traces
-```
-
-The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB test heap):
-
-```bash
-./gradlew :minisat:jvmTest -Dbigtrace
 ```
 
 ## Extras
 
-This repo stays lean — just the solvers, the `Ksat` facade and this README. The interesting
-extras live in the separate **optional** `ksat-extra` submodule, which a default
-`git clone --recursive` does NOT pull. Get it with:
+An optional submodule [ksat-extra](https://github.com/manfredscheucher/ksat-extra) adds a
+multiplatform demo (JVM, browser, Android, iOS, with screenshots), the runtime benchmarks, the
+docs, and the shadow/trace harness. It's not pulled by default; see its README for details.
 
 ```bash
 git submodule update --init --checkout ksat-extra
 ```
-
-What's in there:
-
-- **A multiplatform demo** (`ksat-extra/demo/`) — enumerate all models of XOR(x1,x2) with each
-  solver, then UNSAT. The SAME Kotlin runs on JVM, in the browser (JS/Wasm), on Android and on
-  iOS, with one-line run scripts for each (`ksat-extra/scripts/`). Screenshots of all four are
-  in the [ksat-extra README](https://github.com/manfredscheucher/ksat-extra).
-
-- **Runtime benchmarks** (`ksat-extra/doc/benchmarks.*`) — C vs Kotlin/JVM vs Kotlin/Native.
-- **Docs** (`ksat-extra/doc/`) — the shadowing methodology and per-solver status.
-- **Shadow/trace harness** (`ksat-extra/shadow/`) — the C references and trace scripts used to
-  check each port against its original (the byte-for-byte comparison behind the main tests).
 
 The demo builds against the solvers via relative paths, so it only works with `ksat-extra`
 checked out inside this repo (the normal case), not as a standalone clone.
